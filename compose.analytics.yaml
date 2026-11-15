@@ -1,0 +1,13 @@
+# Optional read-only publication of an existing public/synthetic Phase 3 study.
+# Run after preparing data/content-study and artifacts/content-study.
+services:
+  backend:
+    environment:
+      VISIONOPS_DATABASE_URL: sqlite:////published-data/video.db
+      VISIONOPS_DASHBOARD_MANIFEST: /published-data/manifest.json
+      VISIONOPS_DASHBOARD_REPORTS: /published-reports
+      VISIONOPS_DASHBOARD_MLFLOW_DIRECTORY: /published-tracking
+    volumes:
+      - ./data/content-study:/published-data:ro
+      - ./artifacts/content-study:/published-reports:ro
+      - ./mlruns/encoding-optimization:/published-tracking:ro

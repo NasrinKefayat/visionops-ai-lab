@@ -12,6 +12,8 @@ services:
       timeout: 3s
       retries: 5
   frontend:
+    environment:
+      VISIONOPS_API_PROXY_TARGET: http://backend:8000
     build:
       context: .
       dockerfile: frontend/Dockerfile

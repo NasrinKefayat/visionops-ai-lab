@@ -2385,6 +2385,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "pyyaml" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -2402,7 +2403,6 @@ ml = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "opencv-python-headless" },
-    { name = "pyyaml" },
     { name = "scikit-learn" },
 ]
 torch = [
@@ -2420,7 +2420,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10,<3" },
     { name = "pydantic-settings", specifier = ">=2.7,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<10" },
-    { name = "pyyaml", marker = "extra == 'ml'", specifier = ">=6,<7" },
+    { name = "pyyaml", specifier = ">=6,<7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<1" },
     { name = "scikit-learn", marker = "extra == 'ml'", specifier = ">=1.6,<2" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=8,<9" },
