@@ -2,7 +2,7 @@
 
 ## Goal and scope
 
-A portfolio platform demonstrating modular backend/frontend engineering, applied computer vision, reproducible research, and future MLOps. Target audiences include software/AI internships and medical imaging PhD applications. Phase 1 provides infrastructure, Phase 2 a standalone CPU video baseline, and Phase 3 an offline content-aware ML study; keep the initial MVP small enough for approximately three days of work. This is a scope target, not a claim that future features are complete.
+A portfolio platform demonstrating modular backend/frontend engineering, applied computer vision, reproducible research, and future MLOps. Target audiences include software/AI internships and medical imaging PhD applications. Phase 1 provides infrastructure, Phase 2 a standalone CPU video baseline, and Phase 3 an offline content-aware ML study, and Phase 4 a read-only analytics API/dashboard; keep the initial MVP small enough for approximately three days of work. This is a scope target, not a claim that future features are complete.
 
 ## Architecture and decisions
 
@@ -20,7 +20,7 @@ A portfolio platform demonstrating modular backend/frontend engineering, applied
 
 Implemented: Phase 1 `/health`, central settings, lazy SQLite infrastructure, Ruff, React skeleton, Docker/Compose, CI, Sphinx, typed model/tracking/tool contracts; Phase 2 FFprobe metadata, content-addressed batch ETL, H.264 encoding, aligned PSNR/SSIM, optional capability-gated VMAF, SQLite experiment records, synthetic/local dataset preparation and a three-CRF baseline CLI; Phase 3 original-source OpenCV/NumPy features, grouped regression datasets, Dummy/RandomForest comparison, constrained CRF prediction, measured policy/Oracle evaluation, validation permutation importance, saved bundles and allowlisted local MLflow tracking.
 
-Not implemented: medical ingestion/models, deep learning, populated dashboards/charts, external MLflow server/UI, model registry, AI provider/tool execution, authentication, migrations, deployment, clinical validation, or GPU jobs.
+Not implemented: medical ingestion/models, deep learning, external MLflow server/UI, model registry, AI provider/tool execution, authentication, migrations, deployment, clinical validation, or GPU jobs.
 
 ## Reproducibility and MLOps plan
 
@@ -52,11 +52,22 @@ Use seed 42 and document deterministic settings and hardware limitations. Each f
 - Generic training accepts alternative estimators, metrics, selection criteria and interpretation scoring. Future scalar medical research can reuse those contracts with a dedicated private loader/extractor. DICOM, CT, MRI, ultrasound, tensor segmentation/Dice and GPU task adapters are documented, not implemented. Video PSNR/SSIM stay separate from future medical task metrics.
 - Medical data/metadata/derived artifacts belong in approved external or ignored private storage. Git/Docker ignore common imaging/model extensions as additional safeguards, not complete PHI detection. No medical dataset was obtained and no medical dependency was added.
 
+## Phase 4 architecture and decisions
+
+- Versioned `/api/v1` routers, Pydantic projections, SQLAlchemy queries, service aggregation, dependency-injected read-only SQLite access and sanitized errors preserve the existing `/health`, CLIs and research methodology.
+- Public-data publication is opt-in: only manifest entries with explicitly false sensitivity and public/synthetic video domains authorize DB rows by source content hash. Source aliases are displayed; raw filenames, file paths, patient/study keys, raw errors and unapproved report fields are excluded. No medical presentation pipeline is implemented.
+- Existing saved Phase 3 reports are projected read-only from configured UUID directories. Malformed/private/symlink reports are excluded; no GET deserializes models, encodes, trains, creates a database/schema or starts MLflow. Local MLflow metadata is read in a bounded path-free ID/status projection without a tracking client/server.
+- Optional POST inference requires a server-configured exact SHA-256 of a trusted local model. Verified in-memory bytes, privacy/provenance and original-source cached features are checked; client paths are forbidden. No subprocess, decoding, training or tracking occurs. A digest establishes identity, not the safety of untrusted pickle code. Default inference stays disabled.
+- React Quality Analysis scopes measured charts/tables to a selected source/run/page with CRF/source/domain filters and encoding detail selection. Optimization labels predictions separately from measurements and exposes selected models, saved recommendations, validation importance, measured fixed/ML/Oracle summaries, coverage, violations and negative reductions. No new research results are fabricated.
+- Reusable KPI/state/pagination components retain null metrics as missing, explicit infinity and failure states. Abortable requests prevent stale-source data races. Responsive SVG charts avoid a runtime chart dependency; Vitest/Testing Library cover practical frontend flows. Vite proxies API requests locally and to the backend Compose service.
+- `compose.analytics.yaml` provides optional read-only mounts for already prepared example data. The API image keeps ML extras optional; host inference uses the documented ML environment. This is a public-data local MVP, not authenticated production serving.
+- JSON/directory/model reads are bounded for this small study. Large-scale indexing, arbitrary artifact browsing, user uploads, background workers, authorization, deployment and medical processing remain out of scope.
+
 ## Next steps after review
 
-Phase 4 has not started. Collect licensed real sources with independent recording groups, freeze a larger protocol and validate acquisition/domain shift before performance claims. Later work can add result APIs/dashboard integration, agents, MLflow registry, uncertainty/fallback policies and dedicated medical/GPU task adapters.
+Phase 5 has not started. Validate on larger licensed real cohorts without changing held-out methodology, then consider authorization, indexed artifact metadata, background operations, real deployment, agents and dedicated medical interfaces in separate work.
 
-The user manages Git manually. Phase 3 changes remain unstaged and uncommitted on the existing `feature/content-aware-ml` branch. No branch switches/creation, commits, pushes, merges, rebases, resets or PRs are part of implementation.
+The user manages Git manually. Phase 4 changes remain unstaged and uncommitted on the existing `feature/analytics-dashboard` branch. No branch creation/switches, commits, pushes, merges, rebases, resets or PRs are part of implementation.
 
 ## Phase 1 local validation
 
@@ -87,3 +98,12 @@ The user manages Git manually. Phase 3 changes remain unstaged and uncommitted o
 - Source provenance is `340ea5f-dirty`; outputs are not a clean committed source snapshot. Full settings, versions, measurement IDs, source hashes, dataset snapshot and split labels are preserved locally. Synthetic results are pipeline checks, not generalization/clinical evidence.
 - Frozen ML/dev install, Ruff lint/format, Sphinx with warnings treated as errors, frontend TypeScript/Vite build and existing Phase 2 CPU baseline tests were executed. Final Pytest: 84 passed, no skips, three upstream deprecation warnings (Starlette/httpx and MLflow/Pydantic). Ruff and format checks passed for 46 Python files; all existing Phase 2 smoke/integration tests remain passing.
 - No GPU, PyTorch, medical reader, external MLflow service, remote CI run or Phase 4 feature was executed/implemented. Files remain uncommitted for manual Git review.
+
+## Phase 4 local validation
+
+- Full Pytest suite: 114 passed, no skips, three upstream deprecation warnings (Starlette/httpx and MLflow/Pydantic). The existing Phase 2/3 tests, including real CPU encodes and grouped learning, remain passing. New API tests cover responses, validation, pagination, publication/privacy, SQL integration/readonly enforcement, finite/infinite/missing metrics, model-unavailable/corrupt/digest mismatch/abstention behavior, MLflow status, sanitized errors and API startup without optional ML imports.
+- Frontend: clean npm install, seven Vitest/React Testing Library tests passed, TypeScript/Vite build passed. Tests cover empty/loading/error/retry states, actual API-contract rendering, filtering, encoding detail, prediction labels, inference abstention and keyboard chart interaction.
+- Ruff lint and format checks passed for 55 Python files. Sphinx HTML built with warnings treated as errors. Default Compose and the optional analytics read-only overlay both validated; Docker images were not rebuilt for Phase 4.
+- Chromium desktop (1440px) and mobile (390px) checks used actual backend data: 12 existing synthetic source videos, 36 completed encodes and three completed saved reports. Source/CRF selection, encoding inspection, optimization navigation/labels and responsive layout passed, with no page errors or horizontal page overflow. Browser screenshots are local validation artifacts outside Git.
+- Existing trusted RandomForest bundle `5f7408dc-e150-4690-830a-b3705a7b284c` was tested through optional POST inference with an in-memory digest allowlist: CRF 18, predicted SSIM 0.9930176718750008 and bitrate 124755.25 bps for synthetic-00 at threshold .99; threshold 1.0 returned explicit abstention. No measured metric was attached to the fresh prediction, and the default running configuration kept inference disabled.
+- No new research result, source dataset, training protocol, medical pipeline, GPU dependency, external MLflow service or Phase 5 feature was introduced. Validation reused ignored existing synthetic data/reports and temporary test fixtures. Changes remain unstaged/uncommitted for user review.

@@ -2,7 +2,7 @@
 
 AI-Powered Video Quality Analysis & Content-Aware Encoding Optimization
 
-A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 3 adds CPU content features, grouped SSIM/bitrate regression, quality-constrained CRF selection, and local MLflow tracking.** Phase 2 video ETL/encoding/quality remains available. Medical inference, agents, deep models, and a populated dashboard remain future work.
+A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 4 adds a read-only FastAPI analytics API and interactive React quality/optimization dashboard over existing measurements and research reports.** Phase 3 supplies CPU content features, grouped SSIM/bitrate regression, constrained CRF prediction and local MLflow tracking. Phase 2 video ETL/encoding/quality remains available. Medical inference, agents, deep models, and a populated dashboard remain future work.
 
 ## Repository
 
@@ -10,7 +10,7 @@ A modular foundation for AI-powered video and medical image analysis, built as a
 backend/
   pyproject.toml, uv.lock    # lightweight runtime + optional ML extras
   src/visionops/
-    api/                    # FastAPI transport
+    api/                    # versioned routers, schemas, read-only queries/services, publication
     config.py               # validated environment settings
     db/                     # SQLAlchemy engine/session factories and video experiment tables
     video/                  # validated metadata, FFmpeg encoding, quality, dataset preparation
@@ -47,7 +47,7 @@ npm ci
 npm run dev
 ```
 
-Backend: port 8000, `GET /health` returns `{"status":"ok"}`; API documentation is at `/docs`. Frontend: port 5173. The frontend is a static skeleton and does not call the backend yet. Health is process liveness, not database/model readiness.
+Backend: port 8000, `GET /health` returns `{"status":"ok"}`; API documentation is at `/docs`. Frontend: port 5173, with a same-origin Vite proxy to backend port 8000. The dashboard uses the versioned `/api/v1` endpoints; no data is shown until public/synthetic sources are explicitly published. Health is process liveness, not database/model readiness.
 
 `visionops.config.Settings` centralizes configuration. Environment variables use `VISIONOPS_`; `.env` is loaded explicitly by the Uvicorn command or Compose, not implicitly by all Python entry points. SQLite URLs are relative to the process working directory. The database engine/session factories are lazy: starting the API does not create a schema or database file. The video CLI explicitly creates missing Phase 2 tables; no migration framework is implemented yet. `VISIONOPS_API_PORT` is validated metadata; set Uvicorn's `--port` explicitly to change its listen port (Compose uses 8000).
 
@@ -62,6 +62,7 @@ uv run --frozen --extra dev --extra ml pytest
 cd ..
 backend/.venv/bin/sphinx-build -W -b html docs docs/_build/html
 cd frontend
+npm test
 npm run build
 ```
 
@@ -133,8 +134,28 @@ See [research methodology and feature definitions](docs/content_aware_ml.rst), [
 
 Medical source identities and patient/study group keys remain local and are excluded from features/tracking. Restricted data is rejected by the public-video adapters and MLflow tracking guard. Domain-specific loaders, features, estimators and evaluators can reuse the generic contracts; DICOM, CT, MRI, ultrasound and segmentation pipelines are documented future extensions, not implemented features. Keep all medical data/metadata and derived artifacts in approved external or ignored storage.
 
+## Phase 4: launch the analytics dashboard
+
+The dashboard has **Quality Analysis** (source metadata, measured quality, compression, timing and CRF charts) and **Optimization** (model metadata, saved predictions, policy comparisons and feature importance). Missing data is explicit; metrics are never filled with demo values or zero. Synthetic studies and predicted versus measured results are labeled separately.
+
+After producing actual Phase 2/3 data using the commands above, start from the repository root:
+
+```bash
+export VISIONOPS_DATABASE_URL="sqlite:///$PWD/data/content-study/video.db"
+export VISIONOPS_DASHBOARD_MANIFEST="$PWD/data/content-study/manifest.json"
+export VISIONOPS_DASHBOARD_REPORTS="$PWD/artifacts/content-study"
+export VISIONOPS_DASHBOARD_MLFLOW_DIRECTORY="$PWD/mlruns/encoding-optimization"
+backend/.venv/bin/uvicorn visionops.api.main:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal, run `cd frontend && npm ci && npm run dev`. Without publication settings, the dashboard intentionally shows empty/unavailable states. For real footage, use an ignored local manifest with licensed originals, stable hashes and parent-recording groups, `domain: public_video`, and `sensitive: false`; run the existing prepare/train workflow against a copied YAML. No downloads, encoding or training occur through GET requests.
+
+The API exposes paginated `/api/v1/videos`, source-scoped quality/encodings/comparison, `/experiments`, `/monitoring`, `/studies`, and `/models`. Local filesystem paths, raw filenames and private metadata are excluded. SQLite access is read-only. Model loading is off by default; optional POST inference requires an administrator-pinned trusted model digest, installed ML extras and existing cached source features. No paths or arbitrary commands are accepted from clients.
+
+See [API, setup and safety details](docs/analytics_dashboard.rst) for endpoint parameters and optional inference configuration. `docker compose -f compose.yaml -f compose.analytics.yaml up --build` can publish the prepared example data through read-only mounts; default Compose needs no dataset. This local MVP has no authentication and is not a production deployment.
+
 ## Future work
 
-Phase 4 has not started. Real-data validation, result APIs/dashboard KPIs, agents, production serving, medical pipelines, deep models and clinical validation remain future work.
+Phase 5 has not started. Real-data validation, agents, production serving/authentication, medical pipelines, deep models and clinical validation remain future work.
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for decisions and status. MIT licensed.

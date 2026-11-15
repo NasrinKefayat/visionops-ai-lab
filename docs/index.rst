@@ -1,7 +1,7 @@
 VisionOps-AI
 ============
 
-Phase 3 adds offline source features, grouped regression and encoding policy research.
+Phase 4 adds a read-only analytics API and interactive quality/optimization dashboard.
 No clinical workflow, deep model or production optimizer is implemented.
 
 .. toctree::
@@ -10,6 +10,7 @@ No clinical workflow, deep model or production optimizer is implemented.
    video_pipeline
    content_aware_ml
    medical_extensibility
+   analytics_dashboard
 
 Architecture
 ------------
