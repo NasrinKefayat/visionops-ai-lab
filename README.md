@@ -1,6 +1,8 @@
-# VisionOps-AI
+# VisionOps AI Lab
 
-A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 2 implements CPU video metadata ETL, H.264 encoding, and PSNR/SSIM evaluation.** Training, medical inference, agents, and a populated dashboard remain future work.
+AI-Powered Video Quality Analysis & Content-Aware Encoding Optimization
+
+A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 3 adds CPU content features, grouped SSIM/bitrate regression, quality-constrained CRF selection, and local MLflow tracking.** Phase 2 video ETL/encoding/quality remains available. Medical inference, agents, deep models, and a populated dashboard remain future work.
 
 ## Repository
 
@@ -15,7 +17,7 @@ backend/
     medical/                # future medical imaging
     pipelines/              # standalone ETL and reproducible CRF baseline
     cli.py                  # dataset, ingest and baseline commands
-    ml/                     # prediction/tracking contracts, training/evaluation placeholders
+    ml/                     # data, grouped training, inference, policies, tracking and study CLI
     assistant/              # typed tool request/result contracts
   tests/
 frontend/                   # React + TypeScript + Vite
@@ -53,9 +55,10 @@ Backend: port 8000, `GET /health` returns `{"status":"ok"}`; API documentation i
 
 ```bash
 cd backend
-uv run --frozen --extra dev ruff check .
-uv run --frozen --extra dev ruff format --check .
-uv run --frozen --extra dev pytest
+uv sync --frozen --extra dev --extra ml
+uv run --frozen --extra dev --extra ml ruff check .
+uv run --frozen --extra dev --extra ml ruff format --check .
+uv run --frozen --extra dev --extra ml pytest
 cd ..
 backend/.venv/bin/sphinx-build -W -b html docs docs/_build/html
 cd frontend
@@ -80,7 +83,7 @@ These are development containers. Frontend runs Vite, not a production web serve
 
 ## Research and ML roadmap
 
-CPU and random seed **42** are defaults. Install optional extras only when a later phase needs them: `uv sync --frozen --extra dev --extra ml` for scikit-learn/MLflow, and `--extra torch` for PyTorch. PyTorch's accelerator build must be selected and verified against the target university cluster, driver, and scheduler; Phase 1 needs no CUDA or GPU. Optional ML packages are declared and locked, but not required or imported by the API.
+CPU and random seed **42** are defaults. Install optional extras for the Phase 3 offline workflow: `uv sync --frozen --extra dev --extra ml` for scikit-learn, OpenCV/NumPy, YAML and local MLflow client tracking, and `--extra torch` for PyTorch. PyTorch's accelerator build must be selected and verified against the target university cluster, driver, and scheduler; Phase 1 needs no CUDA or GPU. Optional ML packages are declared and locked, but not required or imported by the API.
 
 Training and evaluation modules stay independent of FastAPI. `Predictor` supports replaceable model adapters and versioned outputs; `ExperimentTracker` provides an MLflow adapter boundary. The tool contracts prepare an assistant registry without executing arbitrary tools or implementing an agent. Dashboard charts and KPIs will consume future REST endpoints rather than access training or storage directly.
 
@@ -109,8 +112,29 @@ Encoding validates CRF/preset/even dimensions and refuses to overwrite inputs or
 
 See [the pipeline documentation](docs/video_pipeline.rst) for architecture, schema, parameters, limitations and **public Sintel sample source/license instructions**. No public dataset is downloaded automatically; `prepare-dataset --local ... --source-url ... --license ...` also accepts small local clips (up to 30 seconds/50 MiB). Datasets, databases and outputs are ignored by Git. All CLI file paths and SQLite URLs are relative to the working directory. Supply `--env-file .env` before the subcommand to load local settings explicitly.
 
+## Phase 3: content-aware ML study
+
+The offline workflow keeps dataset loading, features, grouped partitions, training, inference, policy evaluation and tracking separate. No API or frontend behavior changes. FFmpeg/FFprobe remain required for measurement; install the optional ML extra for research (no GPU/PyTorch/medical dependencies):
+
+```bash
+(cd backend && uv sync --frozen --extra dev --extra ml)
+backend/.venv/bin/python -m visionops.ml.cli synthetic --output data/content-study --count 12
+backend/.venv/bin/python -m visionops.ml.cli prepare research/encoding_optimization/synthetic.yaml \
+  --code-revision "$(git rev-parse HEAD)-dirty"
+backend/.venv/bin/python -m visionops.ml.cli train research/encoding_optimization/synthetic.yaml \
+  --code-revision "$(git rev-parse HEAD)-dirty"
+```
+
+The generator refuses existing directories; reuse `train` to create a fresh run from the measured SQLite data. Use a clean revision once changes are committed. Sources are independently generated tiny synthetic scenes, not evidence of real-video generalization. Training compares DummyRegressor and RandomForestRegressor for SSIM and bitrate. Selection and permutation importance use validation only; frozen models are evaluated on held-out source groups. Inputs contain original-source features plus CRF, never encoded-output features or measured targets.
+
+Reports, dataset snapshots, trusted-load-only model bundles and interpretation JSON live in ignored `artifacts/content-study/<uuid>/`. The YAML's local MLflow file store is `mlruns/encoding-optimization`; it logs allowed aggregate metadata/metrics and public model artifacts without an external server. The lightweight `mlflow-skinny` client is sufficient; an MLflow server/UI is not installed. `recommend` emits **predicted** SSIM/bitrate or explicitly abstains; measurements are required to verify a recommendation. R² is omitted for fewer than five independent evaluation groups or constant targets.
+
+See [research methodology and feature definitions](docs/content_aware_ml.rst), [study configuration](research/encoding_optimization/synthetic.yaml), and [medical extension contract](docs/medical_extensibility.rst). To add real public videos, provide an ignored manifest with actual content hashes and parent-recording groups; no datasets are downloaded automatically. Use substantially more independent sources before making performance claims.
+
+Medical source identities and patient/study group keys remain local and are excluded from features/tracking. Restricted data is rejected by the public-video adapters and MLflow tracking guard. Domain-specific loaders, features, estimators and evaluators can reuse the generic contracts; DICOM, CT, MRI, ultrasound and segmentation pipelines are documented future extensions, not implemented features. Keep all medical data/metadata and derived artifacts in approved external or ignored storage.
+
 ## Future work
 
-Phase 3 is not implemented. Review the video baseline before adding read-only result APIs, real dashboard KPIs, content-aware optimization, or MLflow adapters. Medical imaging, model training and agent execution remain independent future components. This is not a clinically validated product.
+Phase 4 has not started. Real-data validation, result APIs/dashboard KPIs, agents, production serving, medical pipelines, deep models and clinical validation remain future work.
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for decisions and status. MIT licensed.

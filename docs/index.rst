@@ -1,13 +1,15 @@
 VisionOps-AI
 ============
 
-Phase 2 adds a CPU video ETL, H.264 encoding, and quality evaluation baseline.
-No trained analysis system or clinical workflow is implemented.
+Phase 3 adds offline source features, grouped regression and encoding policy research.
+No clinical workflow, deep model or production optimizer is implemented.
 
 .. toctree::
    :maxdepth: 2
 
    video_pipeline
+   content_aware_ml
+   medical_extensibility
 
 Architecture
 ------------
@@ -34,5 +36,6 @@ Research and MLOps roadmap
 Future experiments must record dataset identity and split, code revision,
 configuration, seed, metrics, and model artifact version. Seed 42 alone does
 not guarantee reproducibility on every device. Baselines and evaluation
-protocols must be defined before training. MLflow adapters, artifact storage,
-model registry integration, and deployment gates are future work.
+protocols must be defined before training. Local MLflow tracking is implemented for explicitly public/synthetic experiments.
+Model registry integration, production artifact storage and deployment gates remain
+future work.

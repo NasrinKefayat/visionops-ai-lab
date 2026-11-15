@@ -1,0 +1,22 @@
+# Paths resolve relative to this file. No downloads are performed.
+manifest: ../../data/content-study/manifest.json
+database: ../../data/content-study/video.db
+output: ../../artifacts/content-study
+tracking_directory: ../../mlruns/encoding-optimization
+tracking: true
+seed: 42
+candidates: [18, 23, 28]
+fixed_crf: 23
+minimum_ssim: 0.99
+validation_fraction: 0.2
+test_fraction: 0.2
+preset: medium
+features:
+  strategy: uniform
+  max_frames: 12
+  stride: 4
+  resize_width: 160
+forest:
+  n_estimators: 64
+  max_depth: 8
+  min_samples_leaf: 1

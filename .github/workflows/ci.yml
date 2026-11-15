@@ -12,13 +12,13 @@ jobs:
           python-version: "3.12"
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen --extra dev
+      - run: uv sync --frozen --extra dev --extra ml
         working-directory: backend
-      - run: uv run --frozen --extra dev ruff check .
+      - run: uv run --frozen --extra dev --extra ml ruff check .
         working-directory: backend
-      - run: uv run --frozen --extra dev ruff format --check .
+      - run: uv run --frozen --extra dev --extra ml ruff format --check .
         working-directory: backend
-      - run: uv run --frozen --extra dev pytest
+      - run: uv run --frozen --extra dev --extra ml pytest
         working-directory: backend
       - run: backend/.venv/bin/sphinx-build -W -b html docs docs/_build/html
   frontend:
