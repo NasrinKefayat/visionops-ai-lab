@@ -218,3 +218,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# VisionOps local state and generated artifacts
+node_modules/
+dist/
+*.tsbuildinfo
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+data/
+artifacts/
+mlruns/
+mlartifacts/
+*.pt
+*.pth
+*.onnx
+*.ckpt

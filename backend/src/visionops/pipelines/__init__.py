@@ -1,0 +1,1 @@
+"""Validated ETL pipeline placeholders."""
