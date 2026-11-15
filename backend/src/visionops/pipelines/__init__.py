@@ -1,1 +1,1 @@
-"""Validated ETL pipeline placeholders."""
+"""Standalone content-addressed ETL and reproducible video experiments."""

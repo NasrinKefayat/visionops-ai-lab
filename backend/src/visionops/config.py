@@ -10,6 +10,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VISIONOPS_", extra="ignore")
 
+    ffmpeg_binary: str = "ffmpeg"
+    ffprobe_binary: str = "ffprobe"
+    video_timeout_seconds: int = Field(default=300, ge=1, le=86400)
+
     app_name: str = "VisionOps-AI"
     database_url: str = "sqlite:///./visionops.db"
     random_seed: int = 42

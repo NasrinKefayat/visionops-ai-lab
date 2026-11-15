@@ -1,14 +1,21 @@
 VisionOps-AI
 ============
 
-Phase 1 provides a development scaffold, not a trained analysis system.
+Phase 2 adds a CPU video ETL, H.264 encoding, and quality evaluation baseline.
+No trained analysis system or clinical workflow is implemented.
+
+.. toctree::
+   :maxdepth: 2
+
+   video_pipeline
 
 Architecture
 ------------
 
 * ``backend/src/visionops/api``: FastAPI transport and liveness endpoint.
 * ``db`` and ``config``: SQLAlchemy infrastructure and validated settings.
-* ``video``, ``medical``, ``pipelines``: independent future domain components.
+* ``video`` and ``pipelines``: standalone metadata, ETL and encoding experiments.
+* ``medical``: future independent medical imaging domain.
 * ``ml``: replaceable prediction and experiment tracking contracts; training
   and evaluation remain independent of HTTP request handling.
 * ``assistant``: tool contracts for a future validated agent tool registry.
