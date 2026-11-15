@@ -1,6 +1,6 @@
 # VisionOps-AI
 
-A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 1 is a scaffold:** no analysis, training, medical inference, agent loop, or populated dashboard is implemented.
+A modular foundation for AI-powered video and medical image analysis, built as a software engineering and research portfolio project. **Phase 2 implements CPU video metadata ETL, H.264 encoding, and PSNR/SSIM evaluation.** Training, medical inference, agents, and a populated dashboard remain future work.
 
 ## Repository
 
@@ -10,9 +10,11 @@ backend/
   src/visionops/
     api/                    # FastAPI transport
     config.py               # validated environment settings
-    db/                     # SQLAlchemy engine/session factories
-    video/, medical/        # domain placeholders
-    pipelines/              # ETL placeholder
+    db/                     # SQLAlchemy engine/session factories and video experiment tables
+    video/                  # validated metadata, FFmpeg encoding, quality, dataset preparation
+    medical/                # future medical imaging
+    pipelines/              # standalone ETL and reproducible CRF baseline
+    cli.py                  # dataset, ingest and baseline commands
     ml/                     # prediction/tracking contracts, training/evaluation placeholders
     assistant/              # typed tool request/result contracts
   tests/
@@ -45,7 +47,7 @@ npm run dev
 
 Backend: port 8000, `GET /health` returns `{"status":"ok"}`; API documentation is at `/docs`. Frontend: port 5173. The frontend is a static skeleton and does not call the backend yet. Health is process liveness, not database/model readiness.
 
-`visionops.config.Settings` centralizes configuration. Environment variables use `VISIONOPS_`; `.env` is loaded explicitly by the Uvicorn command or Compose, not implicitly by all Python entry points. SQLite URLs are relative to the process working directory. The database engine/session factories are lazy: starting the API does not create a schema or database file. No migrations or application tables exist yet. `VISIONOPS_API_PORT` is validated metadata; set Uvicorn's `--port` explicitly to change its listen port (Compose uses 8000).
+`visionops.config.Settings` centralizes configuration. Environment variables use `VISIONOPS_`; `.env` is loaded explicitly by the Uvicorn command or Compose, not implicitly by all Python entry points. SQLite URLs are relative to the process working directory. The database engine/session factories are lazy: starting the API does not create a schema or database file. The video CLI explicitly creates missing Phase 2 tables; no migration framework is implemented yet. `VISIONOPS_API_PORT` is validated metadata; set Uvicorn's `--port` explicitly to change its listen port (Compose uses 8000).
 
 ## Validation
 
@@ -84,8 +86,31 @@ Training and evaluation modules stay independent of FastAPI. `Predictor` support
 
 Future runs must record dataset/version and split, code revision, seed, configuration, metrics, environment, and model artifact version. Seed 42 is not itself a guarantee of deterministic GPU execution. Compare a simple baseline before adding deep models. Do not commit datasets, patient data, weights, credentials, local databases, or generated artifacts.
 
-## Starting Phase 2
+## Phase 2: run the video baseline
 
-Review Phase 1 and manage branches/commits manually. Then define a small public or synthetic dataset, a validated ETL schema and SQLite metadata tables, and one CPU baseline with a fixed split and seed 42. Add tests for ingestion and evaluation before connecting API endpoints and dashboard KPIs. Implement the MLflow adapter and artifact/version metadata when real experiment tracking is introduced. Keep video and medical tasks independently scoped; this scaffold is not a clinically validated product.
+Install FFmpeg 5.1+ and FFprobe with libx264, PSNR and SSIM support (`sudo apt-get install ffmpeg` on Debian/Ubuntu, or `brew install ffmpeg` on macOS). No new Python packages, ML frameworks, or GPU are required.
+
+From the repository root, after the backend installation above:
+
+```bash
+backend/.venv/bin/python -m visionops.cli prepare-dataset --output data/synthetic
+VISIONOPS_DATABASE_URL=sqlite:///./data/video.db \
+  backend/.venv/bin/python -m visionops.cli ingest data/synthetic/sample.mp4
+VISIONOPS_DATABASE_URL=sqlite:///./data/video.db \
+  backend/.venv/bin/python -m visionops.cli baseline data/synthetic/sample.mp4 \
+  --output artifacts/baseline --code-revision "$(git rev-parse HEAD)-dirty"
+```
+
+The synthetic input is two seconds, 320x240, 24 FPS, lossless H.264. The baseline encodes **CRF 18, 23, 28**, medium preset, one CPU thread, native dimensions and yuv420p. It records source/output hashes, configuration, seed 42, full tool versions, UTC timestamps, bitrate, bytes, encoding time, PSNR and SSIM. Each invocation gets a fresh run directory with MP4s and `report.json`; successful/failed experiments are persisted in SQLite. Use a new dataset directory to prepare another sample. Use the actual clean code SHA after committing; `-dirty` marks uncommitted work, not a full source snapshot.
+
+Metadata ingestion deduplicates by content SHA-256, even across filenames. SQLite uses the existing SQLAlchemy configuration; tables are `videos`, `encoding_configurations`, `experiments`, `encoding_results`, and `quality_metrics`. Foreign keys are enabled. `create_all` creates missing tables but does not migrate existing schemas. The MVP assumes one experiment writer. Video operations do not add API endpoints or change `/health`.
+
+Encoding validates CRF/preset/even dimensions and refuses to overwrite inputs or existing outputs. It drops audio and measures video-container bitrate, including muxing overhead. Quality evaluation rejects mismatched dimensions, pixel formats, frame counts, durations or decoded relative frame timestamps. A resized output requires a matching reference; no automatic alignment hides incompatibility. Infinite PSNR is represented by a null value plus an explicit flag. VMAF is opt-in (`--vmaf`) and requires FFmpeg libvmaf support; it is not installed by default.
+
+See [the pipeline documentation](docs/video_pipeline.rst) for architecture, schema, parameters, limitations and **public Sintel sample source/license instructions**. No public dataset is downloaded automatically; `prepare-dataset --local ... --source-url ... --license ...` also accepts small local clips (up to 30 seconds/50 MiB). Datasets, databases and outputs are ignored by Git. All CLI file paths and SQLite URLs are relative to the working directory. Supply `--env-file .env` before the subcommand to load local settings explicitly.
+
+## Future work
+
+Phase 3 is not implemented. Review the video baseline before adding read-only result APIs, real dashboard KPIs, content-aware optimization, or MLflow adapters. Medical imaging, model training and agent execution remain independent future components. This is not a clinically validated product.
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for decisions and status. MIT licensed.
